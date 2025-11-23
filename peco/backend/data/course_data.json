@@ -1,0 +1,84 @@
+{
+  "course": {
+    "title": "Tree Planting Mastery",
+    "units": [
+      {
+        "unit_id": 1,
+        "title": "Seedling Selection",
+        "lessons": [
+          {
+            "lesson_id": 101,
+            "title": "Native vs Exotic",
+            "type": "article",
+            "content": "When choosing trees for your local environment, it's crucial to understand the difference between native and exotic species. Native trees are those that have evolved in a particular region over thousands of years. They are well-adapted to the local climate, soil, and wildlife. Exotic trees, on the other hand, are introduced from other regions. While some exotics can be beneficial, many can become invasive, out-competing native species for resources and disrupting the local ecosystem."
+          },
+          {
+            "lesson_id": 102,
+            "title": "Identifying Seeds",
+            "type": "video",
+            "video_url": "https://www.youtube.com/watch?v=example"
+          },
+          {
+            "lesson_id": 103,
+            "title": "Unit Quiz",
+            "type": "quiz",
+            "xp_reward": 50,
+            "questions": [
+              {
+                "question_id": 1031,
+                "question": "Which type of tree is generally better for the local ecosystem?",
+                "options": [
+                  { "option_id": "A", "text": "Exotic" },
+                  { "option_id": "B", "text": "Native" },
+                  { "option_id": "C", "text": "Hybrid" },
+                  { "option_id": "D", "text": "Genetically Modified" }
+                ],
+                "correct_answer": "B"
+              },
+              {
+                "question_id": 1032,
+                "question": "What is a potential risk of planting exotic trees?",
+                "options": [
+                  { "option_id": "A", "text": "They grow too slowly." },
+                  { "option_id": "B", "text": "They require more water." },
+                  { "option_id": "C", "text": "They can become invasive." },
+                  { "option_id": "D", "text": "They do not produce seeds." }
+                ],
+                "correct_answer": "C"
+              },
+              {
+                "question_id": 1033,
+                "question": "Native trees are adapted to which of the following?",
+                "options": [
+                  { "option_id": "A", "text": "Local climate and soil" },
+                  { "option_id": "B", "text": "Foreign pests" },
+                  { "option_id": "C", "text": "Tropical environments only" },
+                  { "option_id": "D", "text": "Desert conditions only" }
+                ],
+                "correct_answer": "A"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "unit_id": 2,
+        "title": "Soil Preparation",
+        "lessons": [
+          {
+            "lesson_id": 201,
+            "title": "Understanding Soil Types",
+            "type": "article",
+            "content": "Soil is not just dirt; it's a complex mixture of minerals, organic matter, gases, liquids, and countless organisms. The main types of soil are sand, silt, and clay. Most soils are a combination of these three. Understanding your soil type is the first step to successful tree planting."
+          },
+          {
+            "lesson_id": 202,
+            "title": "Composting for Rich Soil",
+            "type": "video",
+            "video_url": "https://www.youtube.com/watch?v=example2"
+          }
+        ]
+      }
+    ]
+  }
+}
