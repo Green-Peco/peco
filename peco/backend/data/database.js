@@ -1,8 +1,9 @@
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs');
 const path = require('path');
 
-const dbPath = path.join(__dirname, 'peco.db');
+const dbPath = path.join(__dirname, '..', process.env.DB_PATH);
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error('Error opening database', err.message);

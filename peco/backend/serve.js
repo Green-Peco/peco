@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const SQLiteStore = require('connect-sqlite3')(session);
@@ -5,7 +6,7 @@ const path = require('path');
 const db = require('./data/database'); // Import the database connection
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // --- MIDDLEWARE ---
 app.use(express.json()); // To parse JSON bodies
@@ -15,10 +16,10 @@ app.use(express.urlencoded({ extended: true })); // To parse URL-encoded bodies
 app.use(
   session({
     store: new SQLiteStore({
-      db: 'peco.db',
-      dir: './data'
+      db: path.basename(process.env.DB_PATH),
+      dir: path.dirname(process.env.DB_PATH)
     }),
-    secret: 'a-super-secret-key', // In production, use an environment variable
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 } // 1 week
