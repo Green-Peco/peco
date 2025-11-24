@@ -21,8 +21,12 @@ const baseURL = getBackendUrl();
 console.log(`Connecting to backend at: ${baseURL}`);
 
 const api = axios.create({
+<<<<<<< HEAD
+  baseURL: 'http://192.168.1.46:3000',
+=======
   baseURL: baseURL,
   withCredentials: true, // Important for sending session cookies
+>>>>>>> origin/aisha
 });
 
 
@@ -31,11 +35,21 @@ export const register = (data) => api.post('/auth/register', data);
 export const login = (data) => api.post('/auth/login', data);
 export const logout = () => api.post('/auth/logout');
 
+<<<<<<< HEAD
+
+// Lesson/Course APIs
+export const getCourses = () => api.get('/api/courses');
+export const getLesson = (lessonId) => api.get(`/api/lessons/${lessonId}`);
+export const completeLesson = (userId, lessonId, answers) =>
+  api.post('/lessons/complete', { userId, lessonId, answers });
+export const getUserProgress = (userId) => api.get('/user/progress', { params: { userId } });
+=======
 // === COURSES & LESSONS ===
 export const getCourses = (params) => api.get('/courses', { params });
 export const getCourseDetails = (courseId) => api.get(`/courses/${courseId}`);
 export const getLesson = (lessonId) => api.get(`/lessons/${lessonId}`);
 export const completeLesson = (lessonId, answers) => api.post(`/lessons/${lessonId}/complete`, { answers });
+>>>>>>> origin/aisha
 
 // === USER ===
 export const getUserProfile = () => api.get('/users/profile');
