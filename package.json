@@ -1,5 +1,18 @@
 {
+<<<<<<< HEAD
   "dependencies": {
     "react-native-animatable": "^1.4.0"
+=======
+  "name": "peco",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm:dev:backend\" \"npm:start:frontend\"",
+    "dev:backend": "npm run dev --prefix peco/backend",
+    "start:frontend": "npm start --prefix peco/frontend/mobile-peco"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+>>>>>>> origin/aisha
   }
 }

@@ -8,180 +8,76 @@ import {
   StyleSheet,
   Dimensions,
   Image,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import FeedCard from "../components/FeedCard";
+import { useRouter, useFocusEffect } from "expo-router";
+import * as api from "../services/api";
 
-export default function HomeFeedScreen({ navigation }) {
-  const [sort, setSort] = useState("all");
-  const [feedItems, setFeedItems] = useState([
-    // REPORT
-    {
-      id: 1,
-      type: "REPORT",
-      title: "Illegal Logging Reported",
-      author: "ranger_jane",
-      excerpt: "Fresh stumps and cut trees found near river trail. Authorities notified.",
-      location: "River Trail",
-      votes: 12,
-      comments: 3,
-      timeAgo: "2h",
-      verified: true,
-      thumbnail: undefined,
-    },
-    {
-      id: 2,
-      type: "REPORT",
-      title: "Suspicious Activity in Forest",
-      author: "ranger_john",
-      excerpt: "Unmarked vehicles seen near protected area. Investigation ongoing.",
-      location: "East Forest",
-      votes: 7,
-      comments: 2,
-      timeAgo: "4h",
-      verified: false,
-      thumbnail: undefined,
-    },
-    {
-      id: 3,
-      type: "REPORT",
-      title: "Illegal Grazing Detected",
-      author: "ranger_sam",
-      excerpt: "Cattle found grazing in restricted zone. Action taken.",
-      location: "South Meadow",
-      votes: 5,
-      comments: 1,
-      timeAgo: "1h",
-      verified: false,
-      thumbnail: undefined,
-    },
-    // NEWS
-    {
-      id: 4,
-      type: "NEWS",
-      title: "New Trees Planted in City Park",
-      author: "PECO team",
-      excerpt: "Over 500 saplings planted to improve air quality and biodiversity.",
-      location: "City Park",
-      votes: 8,
-      comments: 1,
-      timeAgo: "1h",
-      verified: false,
-      thumbnail: undefined,
-    },
-    {
-      id: 5,
-      type: "NEWS",
-      title: "Environmental Awareness Week Announced",
-      author: "PECO team",
-      excerpt: "Join us for events and workshops to protect our forests.",
-      location: "PECO HQ",
-      votes: 10,
-      comments: 4,
-      timeAgo: "5h",
-      verified: false,
-      thumbnail: undefined,
-    },
-    {
-      id: 6,
-      type: "NEWS",
-      title: "Local School Wins Green Award",
-      author: "eco_news",
-      excerpt: "Students recognized for tree planting and recycling efforts.",
-      location: "Green Valley School",
-      votes: 6,
-      comments: 2,
-      timeAgo: "2h",
-      verified: false,
-      thumbnail: undefined,
-    },
-    // LESSON
-    {
-      id: 7,
-      type: "LESSON",
-      title: "How to Protect Forests from Threats",
-      author: "mentor_ali",
-      excerpt: "Learn to spot illegal mining, logging, and how to report them.",
-      location: "North Ridge",
-      votes: 15,
-      comments: 5,
-      timeAgo: "3h",
-      verified: false,
-      thumbnail: undefined,
-    },
-    {
-      id: 8,
-      type: "LESSON",
-      title: "Tree Planting Techniques",
-      author: "mentor_sara",
-      excerpt: "Best practices for planting and caring for young trees.",
-      location: "Training Center",
-      votes: 9,
-      comments: 2,
-      timeAgo: "6h",
-      verified: false,
-      thumbnail: undefined,
-    },
-    {
-      id: 9,
-      type: "LESSON",
-      title: "Identifying Threats to Trees",
-      author: "mentor_luke",
-      excerpt: "How to recognize pests and diseases in forest environments.",
-      location: "Forest Lab",
-      votes: 11,
-      comments: 3,
-      timeAgo: "2h",
-      verified: false,
-      thumbnail: undefined,
-    },
-    // DISCUSSION
-    {
-      id: 10,
-      type: "DISCUSSION",
-      title: "Best Practices for Fire Prevention in Forests",
-      author: "eco_warrior",
-      excerpt: "Share your tips and experiences to keep our forests safe from wildfires.",
-      location: "Community Forum",
-      votes: 20,
-      comments: 10,
-      timeAgo: "30m",
-      verified: false,
-      thumbnail: undefined,
-    },
-    {
-      id: 11,
-      type: "DISCUSSION",
-      title: "How to Encourage Community Involvement",
-      author: "forest_friend",
-      excerpt: "Ideas for getting more people to help protect the environment.",
-      location: "Online Forum",
-      votes: 13,
-      comments: 6,
-      timeAgo: "2h",
-      verified: false,
-      thumbnail: undefined,
-    },
-    {
-      id: 12,
-      type: "DISCUSSION",
-      title: "Debate: Logging vs. Conservation",
-      author: "green_debater",
-      excerpt: "Discuss the balance between resource use and forest protection.",
-      location: "Debate Hall",
-      votes: 17,
-      comments: 8,
-      timeAgo: "1h",
-      verified: false,
-      thumbnail: undefined,
-    },
-  ]);
+export default function HomeFeedScreen() {
+  const [sort, setSort] = useState("all"); // Filter by tags or post types if needed
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const router = useRouter();
 
-  // Filter feedItems by selected chip
-  const filteredItems = sort === "all"
-    ? feedItems
-    : feedItems.filter(item => item.type.toLowerCase() === sort);
+  const fetchPosts = async () => {
+    try {
+      setLoading(true);
+      const response = await api.getPosts();
+      setPosts(response.data.posts);
+    } catch (error) {
+      console.error("Failed to fetch posts:", error);
+      Alert.alert("Error", "Could not load posts.");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchPosts();
+    }, [])
+  );
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchPosts();
+  }, []);
+
+  // Filter posts by selected chip (not implemented on backend yet, so frontend filter)
+  const filteredPosts = sort === "all"
+    ? posts
+    : posts.filter(post => post.tags && post.tags.includes(sort)); // Assuming tags are used for filtering
+
+  const renderPost = ({ item }) => (
+    <FeedCard 
+      item={{
+        id: item.id,
+        type: item.tags && item.tags.length > 0 ? item.tags[0].toUpperCase() : 'POST', // Use first tag as type
+        title: item.content.substring(0, 50) + (item.content.length > 50 ? '...' : ''), // First 50 chars as title
+        author: item.author || 'Anonymous',
+        excerpt: item.content,
+        location: 'Global', // Placeholder
+        votes: 0, // Not implemented yet
+        comments: 0, // Not implemented yet
+        timeAgo: new Date(item.created_at).toLocaleDateString(), // Format time
+        verified: false, // Placeholder
+        thumbnail: item.media_url,
+      }} 
+    />
+  );
+
+  if (loading && !refreshing) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <ActivityIndicator size="large" color="#27ae60" style={{ flex: 1, justifyContent: 'center' }} />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -213,21 +109,23 @@ export default function HomeFeedScreen({ navigation }) {
         ))}
       </View>
 
-      {/* FloatingActionButton: Create */}
+      {/* FloatingActionButton: Create Post */}
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => navigation.navigate("CreateReport")}
+        onPress={() => router.push('CreatePostScreen')}
       >
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
 
       {/* Feed list */}
       <FlatList
-        data={filteredItems}
+        data={filteredPosts}
         keyExtractor={(item) => String(item.id)}
-        renderItem={({ item }) => <FeedCard item={item} navigation={navigation} />}
+        renderItem={renderPost}
         contentContainerStyle={{ paddingBottom: 80 }}
-        // ...add pull-to-refresh, infinite scroll props as needed...
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#27ae60"]} tintColor="#27ae60" />
+        }
       />
     </SafeAreaView>
   );
