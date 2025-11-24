@@ -1,157 +1,134 @@
-import React, { useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Dimensions } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Dimensions, ActivityIndicator, RefreshControl, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
-const mockCommunities = [
-	{
-		id: 1,
-		name: 'Green Valley',
-		description: 'Protecting local forests and wildlife.',
-		members: 120,
-		joined: false,
-	},
-	{
-		id: 2,
-		name: 'Tree Guardians',
-		description: 'Community for tree planting and care.',
-		members: 85,
-		joined: true,
-	},
-	{
-		id: 3,
-		name: 'Eco Rangers',
-		description: 'Reporting and preventing illegal logging.',
-		members: 60,
-		joined: false,
-	},
-	{
-		id: 4,
-		name: 'Forest Friends',
-		description: 'Connecting people who love forests.',
-		members: 45,
-		joined: false,
-	},
-	{
-		id: 5,
-		name: 'Wildlife Watchers',
-		description: 'Observing and protecting wildlife habitats.',
-		members: 70,
-		joined: false,
-	},
-	{
-		id: 6,
-		name: 'Clean Rivers',
-		description: 'Keeping rivers clean and safe for all.',
-		members: 33,
-		joined: false,
-	},
-	{
-		id: 7,
-		name: 'Urban Greeners',
-		description: 'Promoting green spaces in cities.',
-		members: 52,
-		joined: false,
-	},
-];
+import { useRouter, useFocusEffect } from 'expo-router';
+import * as api from '../services/api';
+import { useAuth } from '../context/AuthContext'; // To potentially show join/leave based on user's communities
 
 const screenWidth = Dimensions.get('window').width;
 
-const renderSearchBar = (search, setSearch) => (
-	<View style={styles.searchBarWrapper}>
-		<TextInput
-			style={styles.searchBar}
-			placeholder="Search communities..."
-			placeholderTextColor="#27ae60"
-			value={search}
-			onChangeText={setSearch}
-		/>
-		<Ionicons name="search" size={22} color="#27ae60" style={styles.searchIcon} />
-	</View>
-);
-
 export default function CommunityScreen() {
-	const [communities, setCommunities] = useState(mockCommunities);
+	const [communities, setCommunities] = useState([]);
 	const [search, setSearch] = useState('');
-	const navigation = useNavigation();
+	const [loading, setLoading] = useState(true);
+	const [refreshing, setRefreshing] = useState(false);
+	const router = useRouter();
+	const { user } = useAuth(); // Assuming user has a list of joined community IDs
 
-	const handleJoinToggle = (id) => {
-		setCommunities((prev) => {
-			const updated = prev.map((c) =>
-				c.id === id ? { ...c, joined: !c.joined } : c
-			);
-			// Find the just-joined community
-			const joinedCommunity = updated.find((c) => c.id === id && c.joined);
-			if (joinedCommunity) {
-				// Automatically navigate to detail after joining
-				navigation.navigate('CommunityDetail', { community: joinedCommunity });
-			}
-			return updated;
-		});
-		// TODO: POST /communities/{id}/join or /leave
+	const fetchCommunities = async () => {
+		try {
+			setLoading(true);
+			const response = await api.getCommunities();
+			// For now, let's assume 'joined' status needs to be checked on frontend if user has a list of joined communities
+			const fetchedCommunities = response.data.communities.map(comm => ({
+				...comm,
+				joined: false, // This would be dynamic based on user.joinedCommunityIds
+			}));
+			setCommunities(fetchedCommunities);
+		} catch (error) {
+			console.error("Failed to fetch communities:", error);
+			Alert.alert("Error", "Could not load communities.");
+		} finally {
+			setLoading(false);
+			setRefreshing(false);
+		}
 	};
 
-	// Filter communities by search
+	useFocusEffect(
+		useCallback(() => {
+			fetchCommunities();
+		}, [])
+	);
+
+	const onRefresh = useCallback(() => {
+		setRefreshing(true);
+		fetchCommunities();
+	}, []);
+
+	const handleJoinToggle = async (id, name) => {
+		try {
+			await api.joinCommunity(id);
+			Alert.alert('Success', `You have joined "${name}"!`);
+			fetchCommunities(); // Refresh list to show updated status
+		} catch (error) {
+			console.error("Failed to join community:", error);
+			const errorMessage = error.response?.data?.error || 'Could not join community.';
+			Alert.alert("Error", errorMessage);
+		}
+	};
+
+	const handleViewCommunity = (community) => {
+		router.push({ pathname: 'CommunityDetailScreen', params: { communityId: community.id } });
+	};
+
 	const filteredCommunities = communities.filter(c =>
 		c.name.toLowerCase().includes(search.toLowerCase())
 	);
-
-	const handleViewCommunity = (community) => {
-		navigation.navigate('CommunityDetail', { community });
-	};
 
 	const renderCommunity = ({ item }) => (
 		<View style={styles.card}>
 			<Text style={styles.name}>{item.name}</Text>
 			<Text style={styles.desc}>{item.description}</Text>
-			<Text style={styles.members}>{item.members} members</Text>
-			{!item.joined ? (
-				<TouchableOpacity
-					style={styles.joinBtn}
-					onPress={() => handleJoinToggle(item.id)}
-				>
-					<Text style={{ color: '#27ae60', fontWeight: 'bold' }}>Join</Text>
-				</TouchableOpacity>
-			) : (
-				<TouchableOpacity
-					style={[styles.viewBtn, { backgroundColor: '#27ae60', borderRadius: 8 }]}
-					onPress={() => handleViewCommunity(item)}
-				>
-					<Text style={{ color: '#fff', fontWeight: 'bold' }}>View Community</Text>
-				</TouchableOpacity>
-			)}
+			{/* Members count is not yet available from backend */}
+			{/* <Text style={styles.members}>{item.members} members</Text> */}
+			
+			{/* Simplified join/view logic for now */}
+			<TouchableOpacity
+				style={[styles.joinBtn, item.joined && styles.viewBtn]}
+				onPress={() => item.joined ? handleViewCommunity(item) : handleJoinToggle(item.id, item.name)}
+			>
+				<Text style={{ color: item.joined ? '#fff' : '#27ae60', fontWeight: 'bold' }}>
+					{item.joined ? 'View Community' : 'Join'}
+				</Text>
+			</TouchableOpacity>
 		</View>
 	);
 
+	if (loading && !refreshing) {
+		return (
+			<View style={[styles.container, { flex: 1, justifyContent: 'center', alignItems: 'center' }]}>
+				<ActivityIndicator size="large" color="#27ae60" />
+			</View>
+		);
+	}
+
 	return (
-	<View style={[styles.container, { flex: 1 }]}> 
+		<View style={[styles.container, { flex: 1 }]}>
 			<Text style={styles.header}>Communities</Text>
-			{renderSearchBar(search, setSearch)}
-			{filteredCommunities.length === 0 ? (
-				<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 32 }}>
-					<Text style={{ color: '#27ae60', fontSize: 18, textAlign: 'center', marginBottom: 12 }}>
-						You haven’t joined any communities yet.
-					</Text>
-					<Text style={{ color: '#333', fontSize: 16, textAlign: 'center', marginBottom: 24 }}>
-						Join or create a community to get started!
-					</Text>
-					<TouchableOpacity style={[styles.createBtn, { position: 'relative', right: 0, bottom: 0 }]}> 
-						<Text style={{ color: '#fff', fontWeight: 'bold' }}>Create Community</Text>
-					</TouchableOpacity>
-				</View>
-			) : (
-				<FlatList
-					data={filteredCommunities}
-					keyExtractor={(item) => String(item.id)}
-					renderItem={renderCommunity}
-					contentContainerStyle={{ paddingBottom: 32 }}
+			<View style={styles.searchBarWrapper}>
+				<TextInput
+					style={styles.searchBar}
+					placeholder="Search communities..."
+					placeholderTextColor="#27ae60"
+					value={search}
+					onChangeText={setSearch}
 				/>
-			)}
-			{filteredCommunities.length !== 0 && (
-				<TouchableOpacity style={styles.createBtn}>
-					<Text style={{ color: '#fff', fontWeight: 'bold' }}>Create Community</Text>
-				</TouchableOpacity>
-			)}
+				<Ionicons name="search" size={22} color="#27ae60" style={styles.searchIcon} />
+			</View>
+			
+			<FlatList
+				data={filteredCommunities}
+				keyExtractor={(item) => String(item.id)}
+				renderItem={renderCommunity}
+				contentContainerStyle={{ paddingBottom: 32 }}
+				refreshControl={
+					<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#27ae60"]} tintColor="#27ae60" />
+				}
+				ListEmptyComponent={!loading && !refreshing && (
+					<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 32 }}>
+						<Text style={{ color: '#27ae60', fontSize: 18, textAlign: 'center', marginBottom: 12 }}>
+							No communities found.
+						</Text>
+						<Text style={{ color: '#333', fontSize: 16, textAlign: 'center', marginBottom: 24 }}>
+							Create one to get started!
+						</Text>
+					</View>
+				)}
+			/>
+			
+			<TouchableOpacity style={styles.createBtn} onPress={() => router.push('CreateCommunityScreen')}>
+				<Text style={{ color: '#fff', fontWeight: 'bold' }}>Create Community</Text>
+			</TouchableOpacity>
 		</View>
 	);
 }
@@ -203,7 +180,6 @@ const styles = StyleSheet.create({
 		shadowOffset: { width: 0, height: 2 },
 		shadowOpacity: 0.08,
 		shadowRadius: 6,
-		// elevation: 0, // remove elevation for Android shadow issues
 	},
 	name: {
 		fontSize: 20,
@@ -229,17 +205,11 @@ const styles = StyleSheet.create({
 		paddingVertical: 8,
 		paddingHorizontal: 24,
 		alignSelf: 'flex-start',
-		marginBottom: 8,
-	},
-	leaveBtn: {
-		backgroundColor: '#27ae60',
-		borderColor: '#27ae60',
+		marginTop: 8,
 	},
 	viewBtn: {
-		alignSelf: 'flex-start',
-		paddingVertical: 4,
-		paddingHorizontal: 12,
-		marginBottom: 4,
+		backgroundColor: '#27ae60',
+		color: '#fff', // Text color needs to be set directly on Text component
 	},
 	createBtn: {
 		position: 'absolute',
@@ -250,5 +220,9 @@ const styles = StyleSheet.create({
 		paddingVertical: 12,
 		paddingHorizontal: 24,
 		elevation: 4,
+		shadowColor: '#000',
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.25,
+		shadowRadius: 3.84,
 	},
 });

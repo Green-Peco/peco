@@ -3,10 +3,9 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
 
-export default function FeedCard({ item, navigation }) {
+export default function FeedCard({ item }) { // Removed navigation prop as it's not used directly
   return (
     <TouchableOpacity
-      onPress={() => navigation.navigate('FeedDetail', { id: item.id })}
       style={{
         marginHorizontal: 16,
         marginVertical: 8,
@@ -45,12 +44,12 @@ export default function FeedCard({ item, navigation }) {
       </View>
       <View style={{ flexDirection: 'row', marginTop: 12, alignItems: 'center' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Text style={{ color: '#388e3c', fontWeight: 'bold', fontSize: 15 }}>▲ {item.votes}</Text>
+          <Text style={{ color: '#388e3c', fontWeight: 'bold', fontSize: 15 }}>▲ {item.votes || 0}</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 18 }}>
-          <Text style={{ color: '#388e3c', fontSize: 15 }}>💬 {item.comments_count}</Text>
+          <Text style={{ color: '#388e3c', fontSize: 15 }}>💬 {item.comments_count || 0}</Text>
         </View>
-        <Text style={{ marginLeft: 'auto', color: '#bbb', fontSize: 13 }}>{item.time}</Text>
+        <Text style={{ marginLeft: 'auto', color: '#bbb', fontSize: 13 }}>{item.timeAgo}</Text>
       </View>
     </TouchableOpacity>
   );
