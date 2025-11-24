@@ -32,20 +32,17 @@ const authRoutes = require('./routes/auth');
 const courseRoutes = require('./routes/courses');
 const userRoutes = require('./routes/users');
 
-app.use('/api/auth', authRoutes);
-app.use('/api/courses', courseRoutes);
-app.use('/api/users', userRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/courses', courseRoutes);
+app.use('/api/v1/users', userRoutes);
+
+const adminRoutes = require('./routes/admin');
+app.use('/api/v1/admin', adminRoutes);
 
 
 // --- ROOT ENDPOINT ---
 app.get('/', (req, res) => {
   res.send('Welcome to the PECO Backend API!');
-});
-
-
-// --- SERVER START ---
-app.listen(port, () => {
-  console.log(`PECO server listening on port ${port}`);
 });
 
 module.exports = app;

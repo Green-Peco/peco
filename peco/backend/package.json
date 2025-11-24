@@ -2,11 +2,11 @@
   "name": "peco-backend",
   "version": "1.0.0",
   "description": "The backend for the PECO gamified learning app.",
-  "main": "serve.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node serve.js",
-    "dev": "node --watch serve.js",
-    "test": "jest"
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "jest --runInBand"
   },
   "keywords": [],
   "author": "",
