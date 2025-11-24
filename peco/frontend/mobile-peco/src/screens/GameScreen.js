@@ -1,3 +1,137 @@
+<<<<<<< HEAD
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'expo-router';
+import { getCourses } from '../services/api';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image } from 'react-native';
+// Mock lessons data
+// Lessons will be fetched from backend
+
+const genericAvatar = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+
+const globalUsers = [
+  {
+    id: 1,
+    name: 'Aisha',
+    avatar: genericAvatar,
+    points: 320,
+    badge: 'Tree Planter',
+  },
+  {
+    id: 2,
+    name: 'Ali',
+    avatar: genericAvatar,
+    points: 290,
+    badge: 'Reporter',
+  },
+  {
+    id: 3,
+    name: 'Sara',
+    avatar: genericAvatar,
+    points: 270,
+    badge: 'Learner',
+  },
+  {
+    id: 4,
+    name: 'John',
+    avatar: genericAvatar,
+    points: 250,
+    badge: 'Tree Planter',
+  },
+  {
+    id: 5,
+    name: 'Mary',
+    avatar: genericAvatar,
+    points: 230,
+    badge: 'Eco Hero',
+  },
+  {
+    id: 6,
+    name: 'Mohamed',
+    avatar: genericAvatar,
+    points: 210,
+    badge: 'Green Guardian',
+  },
+];
+
+const localUsers = [
+  {
+    id: 1,
+    name: 'Aisha',
+    avatar: genericAvatar,
+    points: 180,
+    badge: 'Tree Planter',
+  },
+  {
+    id: 2,
+    name: 'Ali',
+    avatar: genericAvatar,
+    points: 160,
+    badge: 'Reporter',
+  },
+  {
+    id: 7,
+    name: 'Layla',
+    avatar: genericAvatar,
+    points: 150,
+    badge: 'Eco Hero',
+  },
+  {
+    id: 8,
+    name: 'Omar',
+    avatar: genericAvatar,
+    points: 140,
+    badge: 'Green Guardian',
+  },
+];
+
+const timeRanges = ['Week', 'Month', 'All Time'];
+const tabs = ['Global', 'Local'];
+
+const weekUsers = [
+  globalUsers[0], globalUsers[1], localUsers[2], localUsers[3]
+];
+const monthUsers = [
+  globalUsers[2], globalUsers[3], localUsers[0], localUsers[1]
+];
+const allTimeUsers = globalUsers;
+
+export default function GameScreen({ navigation }) {
+  const [activeTab, setActiveTab] = useState('Global');
+  const [activeTime, setActiveTime] = useState('Week');
+  const [lessonProgress, setLessonProgress] = useState([]);
+  useEffect(() => {
+    async function fetchLessons() {
+      try {
+        const res = await getCourses();
+        console.log('Backend response:', res.data); // Debug log
+        // Map backend data to expected format
+        const lessonsData = (res.data.courses || []).map(l => ({
+          id: l.id,
+          title: l.title,
+          complete: l.complete || false
+        }));
+        setLessonProgress(lessonsData);
+      } catch (err) {
+        console.error('Error fetching lessons:', err); // Debug log
+        // fallback to mock data if backend fails
+        setLessonProgress([
+          { id: 1, title: 'Why Forests Matter', complete: true },
+          { id: 2, title: 'Tree Planting Basics', complete: true },
+          { id: 3, title: 'Wildlife Protection', complete: false },
+          { id: 4, title: 'Reporting Issues', complete: false },
+          { id: 5, title: 'Eco-Friendly Habits', complete: false },
+        ]);
+      }
+    }
+    fetchLessons();
+  }, []);
+  const currentUser = globalUsers[0];
+  const router = useRouter();
+  // Handle lesson click
+  const handleLessonPress = (lesson) => {
+  // Navigate to lesson detail screen, passing lesson id and title using Expo Router
+  router.push({ pathname: '/LessonDetailScreen', params: { lessonId: lesson.id, lessonTitle: lesson.title } });
+=======
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image, ActivityIndicator, Alert } from 'react-native';
@@ -43,6 +177,7 @@ export default function GameScreen() {
     } finally {
       setIsLoading(false);
     }
+>>>>>>> origin/aisha
   };
 
   // useFocusEffect is like useEffect but runs every time the screen comes into focus
@@ -233,6 +368,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderColor: '#eafaf1',
     borderWidth: 1,
+elevation: 2,
     elevation: 2,
   },
   avatar: {
