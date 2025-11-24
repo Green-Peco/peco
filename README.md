@@ -16,7 +16,7 @@ PECO is more than an application; it is a digital ecosystem that turns the daunt
 
 Here is the story of how PECO works, told through a day in the life of its users.
 
-Chapter 1: The Morning Ritual (Gamified Education)
+feature 1: The Morning Ritual (Gamified Education)
 The journey begins with Education, but not the boring kind. Imagine a user, let’s call her Maya (12 years old). She opens PECO in the morning not to scroll mindlessly, but to save her "Streak."
 
 The Feature: A Gamified Learning Engine (Duolingo-style).
@@ -27,7 +27,7 @@ The Lesson: She doesn't read a textbook. She swipes through bite-sized, interact
 
 The Reward: In 5 minutes, she finishes. The app celebrates with a burst of confetti. She earns 50 XP (Experience Points) and levels up to "Seedling Scout." A notification tells her: "You kept your forest alive for 15 days straight!"
 
-Chapter 2: The Digital Town Square (Social Feed & Reporting)
+feature 2: The Digital Town Square (Social Feed & Reporting)
 While Maya learns, Samuel (25), a university student, is on his commute. He opens the Social Feed to see what is happening in the environmental world around him.
 
 The Feature: A Social News Feed (Twitter/X-style) with a "Watchdog" capability.
@@ -42,7 +42,7 @@ Tagging: He comments and tags the local environmental group: "@RiverCleanUpTeam,
 
 The Watchdog Tool: Samuel notices a different post containing illegal logging activity. He hits the Report Button. A specialized menu pops up allowing him to categorize the report ("Illegal Logging"), add a geolocation, and escalate it to community moderators. This isn't just complaining; it's digital patrolling.
 
-Chapter 3: The War Room (Community & Governance)
+feature 3: The War Room (Community & Governance)
 The alert from Samuel reaches Mama Wangari (55), a community organizer. She manages the "Green Warriors," a local group on PECO. She needs to mobilize people fast.
 
 The Feature: Community Groups & Chat (WhatsApp-style).
@@ -59,7 +59,7 @@ Leadership: The group also uses the Election Tool to vote for their monthly Trea
 
 Moderation: If a member starts spamming or being abusive, the group guidelines kick in. Users can report the offender, and the democratic moderation tools allow admins to remove them, ensuring the space remains safe and focused.
 
-Chapter 4: The Loop of Action (Real-World Impact)
+feature 4: The Loop of Action (Real-World Impact)
 The story culminates when the digital world meets the physical world.
 
 On Saturday, Maya (the student), Samuel (the activist), and Wangari (the leader) meet at the Riverbank.
@@ -75,17 +75,6 @@ After the event, they take a photo. They post it as a "Moment" on PECO.
 Maya gets a "River Hero" Badge on her profile.
 
 The Community earns Group XP to climb the regional leaderboard.
-
-The cycle begins again.
-
-Summary of Capabilities
-PECO is built on a tech stack that enables this seamless flow:
-
-Backend (Node.js/Python): The brain that tracks the XP, handles the millions of instant chat messages, and secures the voting data.
-
-Database (PostgreSQL): The memory bank that remembers every lesson learned, every vote cast, and every report filed.
-
-Frontend (React): The beautiful, simple face that makes complex governance look like a game and makes education feel like play.
 
 ## PECO makes conservation accessible to the child, actionable for the youth, and manageable for the leader.
 
