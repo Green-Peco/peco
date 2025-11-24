@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderColor: '#eafaf1',
     borderWidth: 1,
-    elevation: 2,    git checkout -b your-feature-branch
+elevation: 2,
   },
   avatar: {
     width: 48,
