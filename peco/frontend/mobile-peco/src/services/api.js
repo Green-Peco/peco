@@ -3,7 +3,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000',
+  baseURL: 'http://192.168.1.46:3000',
 });
 
 export const register = (data) => api.post('/auth/register2', data);
@@ -19,8 +19,8 @@ export const analyzeImage = (user_id, file) => api.post('/antugrow/analyze-image
 
 
 // Lesson/Course APIs
-export const getCourses = () => api.get('/courses');
-export const getLesson = (lessonId) => api.get(`/lessons/${lessonId}`);
+export const getCourses = () => api.get('/api/courses');
+export const getLesson = (lessonId) => api.get(`/api/lessons/${lessonId}`);
 export const completeLesson = (userId, lessonId, answers) =>
   api.post('/lessons/complete', { userId, lessonId, answers });
 export const getUserProgress = (userId) => api.get('/user/progress', { params: { userId } });

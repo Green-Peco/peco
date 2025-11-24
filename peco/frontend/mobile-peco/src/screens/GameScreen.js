@@ -1,14 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
+import { getCourses } from '../services/api';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image } from 'react-native';
 // Mock lessons data
-const lessons = [
-  { id: 1, title: 'Why Forests Matter', complete: true },
-  { id: 2, title: 'Tree Planting Basics', complete: true },
-  { id: 3, title: 'Wildlife Protection', complete: false },
-  { id: 4, title: 'Reporting Issues', complete: false },
-  { id: 5, title: 'Eco-Friendly Habits', complete: false },
-];
+// Lessons will be fetched from backend
 
 const genericAvatar = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
 
@@ -102,17 +97,39 @@ const allTimeUsers = globalUsers;
 export default function GameScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('Global');
   const [activeTime, setActiveTime] = useState('Week');
-  const [lessonProgress, setLessonProgress] = useState(lessons);
+  const [lessonProgress, setLessonProgress] = useState([]);
+  useEffect(() => {
+    async function fetchLessons() {
+      try {
+        const res = await getCourses();
+        console.log('Backend response:', res.data); // Debug log
+        // Map backend data to expected format
+        const lessonsData = (res.data.courses || []).map(l => ({
+          id: l.id,
+          title: l.title,
+          complete: l.complete || false
+        }));
+        setLessonProgress(lessonsData);
+      } catch (err) {
+        console.error('Error fetching lessons:', err); // Debug log
+        // fallback to mock data if backend fails
+        setLessonProgress([
+          { id: 1, title: 'Why Forests Matter', complete: true },
+          { id: 2, title: 'Tree Planting Basics', complete: true },
+          { id: 3, title: 'Wildlife Protection', complete: false },
+          { id: 4, title: 'Reporting Issues', complete: false },
+          { id: 5, title: 'Eco-Friendly Habits', complete: false },
+        ]);
+      }
+    }
+    fetchLessons();
+  }, []);
   const currentUser = globalUsers[0];
   const router = useRouter();
   // Handle lesson click
   const handleLessonPress = (lesson) => {
-    if (!lesson.complete) {
-      // Mark lesson as complete and show badge animation (mock)
-      setLessonProgress(prev => prev.map(l => l.id === lesson.id ? { ...l, complete: true } : l));
-      // TODO: Show badge animation/feedback
-    }
-    // TODO: Navigate to lesson detail if needed
+  // Navigate to lesson detail screen, passing lesson id and title using Expo Router
+  router.push({ pathname: '/LessonDetailScreen', params: { lessonId: lesson.id, lessonTitle: lesson.title } });
   };
 
   let leaderboardUsers = [];

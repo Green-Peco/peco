@@ -1,21 +1,29 @@
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
-const sqlite3 = require('sqlite3').verbose();
-const fs = require('fs');
-const path = require('path');
 
+
+// --- Module Imports ---
+const path = require('path');
+const fs = require('fs');
+const sqlite3 = require('sqlite3').verbose();
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+
+// --- Database Path ---
 const dbPath = path.join(__dirname, '..', process.env.DB_PATH);
+
+// --- Database Connection ---
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
-        console.error('Error opening database', err.message);
+        console.error('Error opening database:', err.message);
     } else {
         console.log('Connected to the SQLite database.');
         initializeDb();
     }
 });
 
+
+
+// --- Initialize Database Tables ---
 function initializeDb() {
     db.serialize(() => {
-        // Create users table
         db.run(`CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE,
@@ -25,22 +33,16 @@ function initializeDb() {
             streak INTEGER DEFAULT 0,
             last_lesson_date TEXT
         )`);
-
-        // Create courses table
         db.run(`CREATE TABLE IF NOT EXISTS courses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL
         )`);
-
-        // Create units table
         db.run(`CREATE TABLE IF NOT EXISTS units (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             course_id INTEGER,
             title TEXT NOT NULL,
             FOREIGN KEY (course_id) REFERENCES courses(id)
         )`);
-
-        // Create lessons table
         db.run(`CREATE TABLE IF NOT EXISTS lessons (
             id INTEGER PRIMARY KEY,
             unit_id INTEGER,
@@ -51,8 +53,6 @@ function initializeDb() {
             xp_reward INTEGER,
             FOREIGN KEY (unit_id) REFERENCES units(id)
         )`);
-
-        // Create questions table
         db.run(`CREATE TABLE IF NOT EXISTS questions (
             id INTEGER PRIMARY KEY,
             lesson_id INTEGER,
@@ -60,8 +60,6 @@ function initializeDb() {
             correct_answer TEXT NOT NULL,
             FOREIGN KEY (lesson_id) REFERENCES lessons(id)
         )`);
-
-        // Create options table
         db.run(`CREATE TABLE IF NOT EXISTS options (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             question_id INTEGER,
@@ -69,8 +67,6 @@ function initializeDb() {
             text TEXT NOT NULL,
             FOREIGN KEY (question_id) REFERENCES questions(id)
         )`);
-
-        // Create user_progress table
         db.run(`CREATE TABLE IF NOT EXISTS user_progress (
             user_id INTEGER,
             lesson_id INTEGER,
@@ -79,25 +75,30 @@ function initializeDb() {
             FOREIGN KEY (user_id) REFERENCES users(id),
             FOREIGN KEY (lesson_id) REFERENCES lessons(id)
         )`);
-
         console.log('Database tables created or already exist.');
         seedData();
     });
 }
 
+// --- Seed Database with Initial Data ---
 function seedData() {
     const courseDataPath = path.join(__dirname, 'course_data.json');
-    const courseData = JSON.parse(fs.readFileSync(courseDataPath, 'utf-8'));
+    let courseData;
+    try {
+        courseData = JSON.parse(fs.readFileSync(courseDataPath, 'utf-8'));
+    } catch (err) {
+        console.error('Error reading course_data.json:', err.message);
+        return;
+    }
 
     const course = courseData.course;
-
     const checkCourseSql = `SELECT id FROM courses WHERE title = ?`;
     db.get(checkCourseSql, [course.title], function(err, row) {
         if (err) {
             return console.error(err.message);
         }
         if (row) {
-            // console.log('Course data already seeded.');
+            // Course data already seeded.
             return;
         }
 
@@ -119,22 +120,23 @@ function seedData() {
 
                     unit.lessons.forEach(lesson => {
                         const insertLessonSql = `INSERT INTO lessons (id, unit_id, title, type, content, video_url, xp_reward) VALUES (?, ?, ?, ?, ?, ?, ?)`;
-                        db.run(insertLessonSql, [lesson.lesson_id, unitId, lesson.title, lesson.type, lesson.content, lesson.video_url, lesson.xp_reward], function(err) {
+                        db.run(insertLessonSql, [lesson.lesson_id, unitId, lesson.title, lesson.type, lesson.content || null, lesson.video_url || null, lesson.xp_reward || null], function(err) {
                             if (err) {
                                 return console.error(err.message);
                             }
-                            if (lesson.type === 'quiz') {
+                            if (lesson.type === 'quiz' && lesson.questions) {
                                 lesson.questions.forEach(question => {
                                     const insertQuestionSql = `INSERT INTO questions (id, lesson_id, question, correct_answer) VALUES (?, ?, ?, ?)`;
                                     db.run(insertQuestionSql, [question.question_id, lesson.lesson_id, question.question, question.correct_answer], function(err) {
                                         if (err) {
                                             return console.error(err.message);
                                         }
-                                        const questionId = this.lastID;
-                                        question.options.forEach(option => {
-                                            const insertOptionSql = `INSERT INTO options (question_id, option_id, text) VALUES (?, ?, ?)`;
-                                            db.run(insertOptionSql, [question.question_id, option.option_id, option.text]);
-                                        });
+                                        if (question.options) {
+                                            question.options.forEach(option => {
+                                                const insertOptionSql = `INSERT INTO options (question_id, option_id, text) VALUES (?, ?, ?)`;
+                                                db.run(insertOptionSql, [question.question_id, option.option_id, option.text]);
+                                            });
+                                        }
                                     });
                                 });
                             }
@@ -147,4 +149,5 @@ function seedData() {
     });
 }
 
+// --- Export Database Connection ---
 module.exports = db;
