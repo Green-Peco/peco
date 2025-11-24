@@ -1,59 +1,72 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useState, FC } from 'react'; // Import FC
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { useAuth } from '../src/context/AuthContext'; // 
+import * as api from '../src/services/api';
 
-export default function Auth() {
+const Auth: FC = () => { // Explicitly type as Functional Component
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const router = useRouter();
+  
+  const { loginAction } = useAuth();
 
-  // Demo credentials
-  const DEMO_USER = { username: 'peco@gmail.com', password: '123' };
-
-  const handleAuth = () => {
+  const handleAuth = async () => {
     setLoading(true);
     setError('');
-    setTimeout(() => {
+    
+    try {
       if (isLogin) {
-        if (username === DEMO_USER.username && password === DEMO_USER.password) {
-          router.replace('/(tabs)/feed');
-        } else {
-          setError('Invalid credentials. Try peco@gmail.com / 123 or register below.');
-        }
+        await loginAction(api.login({ username, password }));
       } else {
-        // Demo register: accept any username/password
-        router.replace('/(tabs)/feed');
+        await api.register({ username, password });
+        await loginAction(api.login({ username, password }));
       }
+    } catch (e: any) { // Cast e to any for easier error handling
+      const errorMessage = e.response?.data?.error || 'An unexpected error occurred.';
+      setError(errorMessage);
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
   return (
     <View style={styles.bg}>
       <View style={styles.card}>
         <Text style={styles.header}>PECO {isLogin ? 'Login' : 'Register'}</Text>
-        <Text style={styles.subtext}>
-          {isLogin
-            ? 'Use demo: peco@gmail.com / 123. If you don\'t have an account, register below.'
-            : 'Create a new account to get started.'}
-        </Text>
-        <TextInput placeholder="Email" value={username} onChangeText={setUsername} style={styles.input} autoCapitalize="none" keyboardType="email-address" />
-        <TextInput placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry style={styles.input} />
+        <Text style={styles.subtext}> Demo Logins: Username: peco@gmail.com Password: 123. </Text>
+        <TextInput 
+          placeholder="Username" 
+          value={username} 
+          onChangeText={setUsername} 
+          style={styles.input} 
+          autoCapitalize="none" 
+        />
+        <TextInput 
+          placeholder="Password" 
+          value={password} 
+          onChangeText={setPassword} 
+          secureTextEntry 
+          style={styles.input} 
+        />
         {error ? <Text style={styles.error}>{error}</Text> : null}
+
         <TouchableOpacity style={styles.loginBtn} onPress={handleAuth} disabled={loading}>
-          <Text style={styles.loginBtnText}>{isLogin ? 'Login' : 'Register'}</Text>
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginBtnText}>{isLogin ? 'Login' : 'Register'}</Text>}
         </TouchableOpacity>
-        <TouchableOpacity style={styles.switchBtn} onPress={() => setIsLogin(!isLogin)}>
+
+        <TouchableOpacity style={styles.switchBtn} onPress={() => setIsLogin(!isLogin)} disabled={loading}>
           <Text style={styles.switchBtnText}>{isLogin ? 'No account? Register' : 'Have an account? Login'}</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
-}
+}; // Change to const Auth: FC = () => { ... }
 
+export default Auth; // Export the const
+
+// Styles remain the same
 const styles = StyleSheet.create({
   bg: {
     flex: 1,
@@ -109,6 +122,8 @@ const styles = StyleSheet.create({
     elevation: 4,
     width: '100%',
     alignItems: 'center',
+    minHeight: 50,
+    justifyContent: 'center',
   },
   loginBtnText: {
     color: '#fff',

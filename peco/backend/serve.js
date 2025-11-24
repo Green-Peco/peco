@@ -4,25 +4,27 @@ const session = require('express-session');
 const SQLiteStore = require('connect-sqlite3')(session);
 const path = require('path');
 const cors = require('cors');
-const db = require('./data/database'); // Import the database connection
+const db = require('./data/database');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 // --- MIDDLEWARE ---
 
-// A more flexible CORS configuration for development
-// This allows any origin, which is fine for local testing but should be
-// restricted in a production environment.
+// Request Logger - This will log every incoming request to the console
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] Received ${req.method} request for ${req.url}`);
+  next();
+});
+
 app.use(cors({
-  origin: (origin, callback) => callback(null, true), // Allow all origins
+  origin: (origin, callback) => callback(null, true),
   credentials: true
 }));
 
-app.use(express.json()); // To parse JSON bodies
-app.use(express.urlencoded({ extended: true })); // To parse URL-encoded bodies
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Session middleware
 app.use(
   session({
     store: new SQLiteStore({
@@ -32,7 +34,7 @@ app.use(
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 } // 1 week
+    cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 }
   })
 );
 
@@ -42,13 +44,18 @@ const courseRoutes = require('./routes/courses');
 const lessonRoutes = require('./routes/lessons');
 const userRoutes = require('./routes/users');
 const adminRoutes = require('./routes/admin');
+const postRoutes = require('./routes/posts');
+const communityRoutes = require('./routes/community');
+const chatRoutes = require('./routes/chat'); // New import
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/lessons', lessonRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/admin', adminRoutes);
-
+app.use('/api/v1/posts', postRoutes);
+app.use('/api/v1/communities', communityRoutes);
+app.use('/api/v1/chat', chatRoutes); // New route
 
 // --- ROOT ENDPOINT ---
 app.get('/', (req, res) => {

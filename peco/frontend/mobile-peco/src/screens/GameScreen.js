@@ -1,154 +1,86 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'expo-router';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image } from 'react-native';
-// Mock lessons data
-const lessons = [
-  { id: 1, title: 'Why Forests Matter', complete: true },
-  { id: 2, title: 'Tree Planting Basics', complete: true },
-  { id: 3, title: 'Wildlife Protection', complete: false },
-  { id: 4, title: 'Reporting Issues', complete: false },
-  { id: 5, title: 'Eco-Friendly Habits', complete: false },
-];
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image, ActivityIndicator, Alert } from 'react-native';
+import { useAuth } from '../context/AuthContext.tsx';
+import * as api from '../services/api';
+import { useFocusEffect } from '@react-navigation/native';
 
 const genericAvatar = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
 
-const globalUsers = [
-  {
-    id: 1,
-    name: 'Aisha',
-    avatar: genericAvatar,
-    points: 320,
-    badge: 'Tree Planter',
-  },
-  {
-    id: 2,
-    name: 'Ali',
-    avatar: genericAvatar,
-    points: 290,
-    badge: 'Reporter',
-  },
-  {
-    id: 3,
-    name: 'Sara',
-    avatar: genericAvatar,
-    points: 270,
-    badge: 'Learner',
-  },
-  {
-    id: 4,
-    name: 'John',
-    avatar: genericAvatar,
-    points: 250,
-    badge: 'Tree Planter',
-  },
-  {
-    id: 5,
-    name: 'Mary',
-    avatar: genericAvatar,
-    points: 230,
-    badge: 'Eco Hero',
-  },
-  {
-    id: 6,
-    name: 'Mohamed',
-    avatar: genericAvatar,
-    points: 210,
-    badge: 'Green Guardian',
-  },
-];
-
-const localUsers = [
-  {
-    id: 1,
-    name: 'Aisha',
-    avatar: genericAvatar,
-    points: 180,
-    badge: 'Tree Planter',
-  },
-  {
-    id: 2,
-    name: 'Ali',
-    avatar: genericAvatar,
-    points: 160,
-    badge: 'Reporter',
-  },
-  {
-    id: 7,
-    name: 'Layla',
-    avatar: genericAvatar,
-    points: 150,
-    badge: 'Eco Hero',
-  },
-  {
-    id: 8,
-    name: 'Omar',
-    avatar: genericAvatar,
-    points: 140,
-    badge: 'Green Guardian',
-  },
-];
-
-const timeRanges = ['Week', 'Month', 'All Time'];
-const tabs = ['Global', 'Local'];
-
-const weekUsers = [
-  globalUsers[0], globalUsers[1], localUsers[2], localUsers[3]
-];
-const monthUsers = [
-  globalUsers[2], globalUsers[3], localUsers[0], localUsers[1]
-];
-const allTimeUsers = globalUsers;
-
-export default function GameScreen({ navigation }) {
-  const [activeTab, setActiveTab] = useState('Global');
-  const [activeTime, setActiveTime] = useState('Week');
-  const [lessonProgress, setLessonProgress] = useState(lessons);
-  const currentUser = globalUsers[0];
+export default function GameScreen() {
+  const [lessons, setLessons] = useState([]);
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  // Handle lesson click
-  const handleLessonPress = (lesson) => {
-    if (!lesson.complete) {
-      // Mark lesson as complete and show badge animation (mock)
-      setLessonProgress(prev => prev.map(l => l.id === lesson.id ? { ...l, complete: true } : l));
-      // TODO: Show badge animation/feedback
+  const { user } = useAuth();
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      // Fetch user progress, course details, and leaderboard simultaneously
+      const [progressRes, courseRes, leaderboardRes] = await Promise.all([
+        api.getUserProgress(),
+        api.getCourseDetails(1), // Hardcoding course ID 1 for now
+        api.getLeaderboard(),
+      ]);
+
+      const completedLessonIds = new Set(progressRes.data.progress.map(p => p.id));
+      
+      // Assuming the lessons are in the first unit for this screen
+      const courseLessons = courseRes.data.course.units[0]?.lessons || [];
+      
+      const enrichedLessons = courseLessons.map(lesson => ({
+        ...lesson,
+        complete: completedLessonIds.has(lesson.id),
+      }));
+
+      setLessons(enrichedLessons);
+      setLeaderboard(leaderboardRes.data.leaderboard);
+
+    } catch (error) {
+      console.error("Failed to fetch game data:", error);
+      Alert.alert("Error", "Could not load game data. Please try again later.");
+    } finally {
+      setIsLoading(false);
     }
-    // TODO: Navigate to lesson detail if needed
   };
 
-  let leaderboardUsers = [];
-  if (activeTab === 'Global') {
-    if (activeTime === 'Week') leaderboardUsers = weekUsers;
-    else if (activeTime === 'Month') leaderboardUsers = monthUsers;
-    else leaderboardUsers = allTimeUsers;
-  } else {
-    leaderboardUsers = localUsers;
-  }
+  // useFocusEffect is like useEffect but runs every time the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [])
+  );
+
+  const handleLessonPress = async (lesson) => {
+    // Navigate to LessonDetailScreen, passing the lesson ID
+    router.push({ pathname: 'LessonDetailScreen', params: { lessonId: lesson.id } });
+  };
 
   const renderUser = ({ item, index }) => (
-    <TouchableOpacity
-      style={styles.userCard}
-      onPress={() => router.push({ pathname: '/ProfileScreen', params: { id: item.id } })}
-    >
-      <Image source={{ uri: item.avatar }} style={styles.avatar} />
+    <TouchableOpacity style={styles.userCard}>
+      <Image source={{ uri: genericAvatar }} style={styles.avatar} />
       <View style={{ flex: 1 }}>
-        <Text style={styles.userName}>{item.name}</Text>
-        <Text style={styles.points}>{item.points} pts</Text>
-        <Text style={styles.badge}>{item.badge}</Text>
+        <Text style={styles.userName}>{item.username}</Text>
+        <Text style={styles.points}>{item.xp} pts</Text>
       </View>
       <Text style={styles.rank}>#{index + 1}</Text>
     </TouchableOpacity>
   );
+  
+  if (isLoading) {
+    return <View style={styles.container}><ActivityIndicator size="large" color="#27ae60" /></View>;
+  }
 
   return (
     <View style={styles.container}>
-      {/* Modern Lessons Header */}
       <View>
         <View style={styles.lessonsHeaderBox}>
           <Text style={styles.lessonsHeaderText}>🌲 Interactive Lessons</Text>
           <Text style={styles.lessonsSubText}>Learn, play, and earn badges!</Text>
         </View>
         <FlatList
-          data={lessonProgress}
+          data={lessons}
           keyExtractor={item => String(item.id)}
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -156,40 +88,24 @@ export default function GameScreen({ navigation }) {
           contentContainerStyle={{ paddingHorizontal: 4 }}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={[styles.lessonCardModern, item.complete ? styles.lessonCompleteModern : styles.lessonLockedModern]}
+              style={[styles.lessonCardModern, item.complete && styles.lessonCompleteModern]}
               onPress={() => handleLessonPress(item)}
-              disabled={item.complete}
             >
               <View style={styles.lessonIconBox}>
                 <Image source={{ uri: 'https://cdn-icons-png.flaticon.com/512/427/427735.png' }} style={styles.lessonIcon} />
               </View>
               <Text style={styles.lessonTitleModern}>{item.title}</Text>
               <View style={styles.lessonProgressBarBg}>
-                <View style={[styles.lessonProgressBarFill, { width: item.complete ? '100%' : '40%' }]} />
+                <View style={[styles.lessonProgressBarFill, { width: item.complete ? '100%' : '0%' }]} />
               </View>
-              <Text style={styles.lessonStatusModern}>{item.complete ? 'Completed' : 'Tap to unlock'}</Text>
+              <Text style={styles.lessonStatusModern}>{item.complete ? 'Completed' : 'Tap to start'}</Text>
             </TouchableOpacity>
           )}
         />
         <Text style={styles.leaderboardHeading}>🏆 Leaderboard</Text>
         <View style={styles.leaderboardSection}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-            {/* Tabs */}
-            <View style={{ flexDirection: 'row' }}>
-              {tabs.map(tab => (
-                <TouchableOpacity
-                  key={tab}
-                  style={[styles.timeChip, activeTab === tab && styles.timeChipActive]}
-                  onPress={() => setActiveTab(tab)}
-                >
-                  <Text style={{ color: activeTab === tab ? '#fff' : '#27ae60', fontWeight: 'bold' }}>{tab}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-          {/* Leaderboard List */}
           <FlatList
-            data={leaderboardUsers}
+            data={leaderboard}
             keyExtractor={item => String(item.id)}
             renderItem={renderUser}
             style={{ marginTop: 0 }}
@@ -200,6 +116,7 @@ export default function GameScreen({ navigation }) {
   );
 }
 
+// Styles have been slightly adjusted for the new data structure
 const styles = StyleSheet.create({
   sectionDivider: {
     height: 2,
@@ -232,28 +149,22 @@ const styles = StyleSheet.create({
   lessonCardModern: {
   width: 200,
   height: 170,
-  backgroundColor: '#eafaf1',
+  backgroundColor: '#fff',
   borderRadius: 28,
   marginHorizontal: 12,
   marginVertical: 12,
   justifyContent: 'center',
   alignItems: 'center',
-  borderColor: '#27ae60',
+  borderColor: '#bbb',
   borderWidth: 2,
   shadowColor: '#27ae60',
   shadowOpacity: 0.15,
   shadowRadius: 8,
   elevation: 4,
-  opacity: 1,
   },
   lessonCompleteModern: {
     borderColor: '#27ae60',
     backgroundColor: '#eafaf1',
-  },
-  lessonLockedModern: {
-    borderColor: '#bbb',
-    backgroundColor: '#fff',
-    opacity: 0.7,
   },
   lessonIconBox: {
     backgroundColor: '#eafaf1',
@@ -271,6 +182,7 @@ const styles = StyleSheet.create({
     color: '#27ae60',
     textAlign: 'center',
     marginBottom: 6,
+    paddingHorizontal: 5,
   },
   lessonProgressBarBg: {
     height: 8,
@@ -321,7 +233,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderColor: '#eafaf1',
     borderWidth: 1,
-    elevation: 2,    git checkout -b your-feature-branch
+    elevation: 2,
   },
   avatar: {
     width: 48,
@@ -360,8 +272,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 6,
     elevation: 2,
-  minHeight: 180,
-  maxHeight: 400,
+    minHeight: 180,
+    maxHeight: 400,
   },
   lessonsHeaderBox: {
     backgroundColor: '#eafaf1',

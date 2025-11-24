@@ -2,6 +2,8 @@
 const { run } = require('./db-wrapper');
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 async function initializeDb() {
     await run(`CREATE TABLE IF NOT EXISTS users (
@@ -15,37 +17,29 @@ async function initializeDb() {
         isAdmin INTEGER DEFAULT 0
     )`);
 
+    // ... (rest of the table creation)
     await run(`CREATE TABLE IF NOT EXISTS courses (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL)`);
     await run(`CREATE TABLE IF NOT EXISTS units (id INTEGER PRIMARY KEY AUTOINCREMENT, course_id INTEGER, title TEXT NOT NULL, FOREIGN KEY (course_id) REFERENCES courses(id))`);
     await run(`CREATE TABLE IF NOT EXISTS lessons (id INTEGER PRIMARY KEY, unit_id INTEGER, title TEXT NOT NULL, type TEXT NOT NULL, content TEXT, video_url TEXT, xp_reward INTEGER, FOREIGN KEY (unit_id) REFERENCES units(id))`);
     await run(`CREATE TABLE IF NOT EXISTS questions (id INTEGER PRIMARY KEY, lesson_id INTEGER, question TEXT NOT NULL, correct_answer TEXT NOT NULL, FOREIGN KEY (lesson_id) REFERENCES lessons(id))`);
     await run(`CREATE TABLE IF NOT EXISTS options (id INTEGER PRIMARY KEY AUTOINCREMENT, question_id INTEGER, option_id TEXT NOT NULL, text TEXT NOT NULL, FOREIGN KEY (question_id) REFERENCES questions(id))`);
-        await run(`CREATE TABLE IF NOT EXISTS user_progress (user_id INTEGER, lesson_id INTEGER, completed_at TEXT, PRIMARY KEY (user_id, lesson_id), FOREIGN KEY (user_id) REFERENCES users(id), FOREIGN KEY (lesson_id) REFERENCES lessons(id))`);
+    await run(`CREATE TABLE IF NOT EXISTS user_progress (user_id INTEGER, lesson_id INTEGER, completed_at TEXT, PRIMARY KEY (user_id, lesson_id), FOREIGN KEY (user_id) REFERENCES users(id), FOREIGN KEY (lesson_id) REFERENCES lessons(id))`);
+    await run(`CREATE TABLE IF NOT EXISTS achievements (id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT NOT NULL, criteria_type TEXT NOT NULL, criteria_value INTEGER NOT NULL)`);
+    await run(`CREATE TABLE IF NOT EXISTS user_achievements (user_id INTEGER, achievement_id TEXT, earned_at TEXT NOT NULL, PRIMARY KEY (user_id, achievement_id), FOREIGN KEY (user_id) REFERENCES users(id), FOREIGN KEY (achievement_id) REFERENCES achievements(id))`);
 
-        await run(`CREATE TABLE IF NOT EXISTS achievements (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            description TEXT NOT NULL,
-            criteria_type TEXT NOT NULL, -- e.g., 'lessons_completed', 'streak'
-            criteria_value INTEGER NOT NULL
-        )`);
-
-        await run(`CREATE TABLE IF NOT EXISTS user_achievements (
-            user_id INTEGER,
-            achievement_id TEXT,
-            earned_at TEXT NOT NULL,
-            PRIMARY KEY (user_id, achievement_id),
-            FOREIGN KEY (user_id) REFERENCES users(id),
-            FOREIGN KEY (achievement_id) REFERENCES achievements(id)
-        )`);
-
-        console.log('Database tables created or already exist.');
-        await seedData();
+    console.log('Database tables created or already exist.');
+    await seedData();
 }
 
 async function seedData() {
-    // ... (course seeding logic)
-
+    // Seed Demo User
+    const demoUserExists = await require('./db-wrapper').get(`SELECT id FROM users WHERE username = ?`, ['peco@gmail.com']);
+    if (!demoUserExists) {
+        console.log('Creating demo user...');
+        const hash = await bcrypt.hash('123', saltRounds);
+        await run(`INSERT INTO users (username, password, isAdmin) VALUES (?, ?, ?)`, ['peco@gmail.com', hash, 1]);
+    }
+    
     // Seed Achievements
     await run(`INSERT OR IGNORE INTO achievements (id, name, description, criteria_type, criteria_value) VALUES
         ('first_lesson', 'First Step', 'Complete your first lesson.', 'lessons_completed', 1),
@@ -54,16 +48,17 @@ async function seedData() {
         ('streak_7', 'Week of Green', 'Maintain a 7-day streak.', 'streak', 7)
     `);
 
+    // Seed Course Data
     const courseDataPath = path.join(__dirname, 'course_data.json');
     const courseData = JSON.parse(fs.readFileSync(courseDataPath, 'utf-8'));
     const course = courseData.course;
 
     const existingCourse = await require('./db-wrapper').get(`SELECT id FROM courses WHERE title = ?`, [course.title]);
     if (existingCourse) {
-        return; // Data already seeded
+        return; // Course data already seeded
     }
 
-    console.log('Seeding database...');
+    console.log('Seeding course data...');
     const courseResult = await run(`INSERT INTO courses (title) VALUES (?)`, [course.title]);
     const courseId = courseResult.lastID;
 

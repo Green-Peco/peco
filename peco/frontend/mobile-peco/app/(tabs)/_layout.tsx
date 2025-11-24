@@ -24,6 +24,8 @@ export default function TabLayout() {
               return <MaterialCommunityIcons name="map-marker" size={size} color={color} />;
             case 'profile':
               return <Ionicons name="person" size={size} color={color} />;
+            case 'chat': // New Chat Tab
+              return <Ionicons name="chatbubbles" size={size} color={color} />;
             default:
               return null;
           }
@@ -34,6 +36,7 @@ export default function TabLayout() {
   <Tabs.Screen name="game" options={{ title: 'Game' }} />
   <Tabs.Screen name="map" options={{ title: 'Map' }} />
   <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+  <Tabs.Screen name="chat" options={{ title: 'Chat' }} />
     </Tabs>
   );
 }
