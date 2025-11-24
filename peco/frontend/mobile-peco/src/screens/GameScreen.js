@@ -233,6 +233,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderColor: '#eafaf1',
     borderWidth: 1,
+elevation: 2,
     elevation: 2,
   },
   avatar: {
