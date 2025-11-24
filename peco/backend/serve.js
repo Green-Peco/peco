@@ -10,10 +10,15 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // --- MIDDLEWARE ---
+
+// A more flexible CORS configuration for development
+// This allows any origin, which is fine for local testing but should be
+// restricted in a production environment.
 app.use(cors({
-  origin: 'http://localhost:5173', // Adjust this to your frontend's origin
+  origin: (origin, callback) => callback(null, true), // Allow all origins
   credentials: true
 }));
+
 app.use(express.json()); // To parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // To parse URL-encoded bodies
 
@@ -32,18 +37,16 @@ app.use(
 );
 
 // --- ROUTES ---
-// (We will create and import these shortly)
 const authRoutes = require('./routes/auth');
 const courseRoutes = require('./routes/courses');
 const lessonRoutes = require('./routes/lessons');
 const userRoutes = require('./routes/users');
+const adminRoutes = require('./routes/admin');
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/lessons', lessonRoutes);
 app.use('/api/v1/users', userRoutes);
-
-const adminRoutes = require('./routes/admin');
 app.use('/api/v1/admin', adminRoutes);
 
 
