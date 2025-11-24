@@ -3,12 +3,17 @@ const express = require('express');
 const session = require('express-session');
 const SQLiteStore = require('connect-sqlite3')(session);
 const path = require('path');
+const cors = require('cors');
 const db = require('./data/database'); // Import the database connection
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 // --- MIDDLEWARE ---
+app.use(cors({
+  origin: 'http://localhost:5173', // Adjust this to your frontend's origin
+  credentials: true
+}));
 app.use(express.json()); // To parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // To parse URL-encoded bodies
 
@@ -30,10 +35,12 @@ app.use(
 // (We will create and import these shortly)
 const authRoutes = require('./routes/auth');
 const courseRoutes = require('./routes/courses');
+const lessonRoutes = require('./routes/lessons');
 const userRoutes = require('./routes/users');
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/courses', courseRoutes);
+app.use('/api/v1/lessons', lessonRoutes);
 app.use('/api/v1/users', userRoutes);
 
 const adminRoutes = require('./routes/admin');
